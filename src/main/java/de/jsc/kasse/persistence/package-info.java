@@ -1,6 +1,5 @@
 /**
- * Persistenzschicht: Repository-Interfaces + JDBC/SQLite-Implementierungen und Schema.
- *
- * <p>(Noch leer — wird in Stage 1 befüllt.)
+ * Persistenzschicht: Repository-Interfaces + JDBC/SQLite-Implementierungen (Unterpaket
+ * {@code jdbc}) und Schema-/Verbindungsverwaltung ({@code Datenbank}).
  */
 package de.jsc.kasse.persistence;
