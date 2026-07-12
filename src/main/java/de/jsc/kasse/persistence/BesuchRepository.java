@@ -1,6 +1,7 @@
 package de.jsc.kasse.persistence;
 
 import de.jsc.kasse.domain.Besuch;
+import de.jsc.kasse.domain.BesuchStatus;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,4 +20,7 @@ public interface BesuchRepository {
     Optional<Besuch> findeById(long id);
 
     List<Besuch> findeByPerson(long personId);
+
+    /** Alle Besuche mit dem angegebenen Status (z. B. offene Besuche für die Tresen-Übersicht). */
+    List<Besuch> findeByStatus(BesuchStatus status);
 }

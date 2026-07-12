@@ -38,7 +38,7 @@ class BesuchRepositoryTest {
     private Besuch offenerBesuch() {
         return new Besuch(0, personId, LocalDate.of(2026, 7, 12),
                 LocalDateTime.of(2026, 7, 12, 9, 30), null, BesuchStatus.ANGEMELDET,
-                0, false, null);
+                0, false, null, null);
     }
 
     @Test
@@ -55,7 +55,7 @@ class BesuchRepositoryTest {
 
         Besuch abgemeldet = new Besuch(gespeichert.id(), personId, gespeichert.datum(),
                 gespeichert.checkIn(), LocalDateTime.of(2026, 7, 12, 12, 0),
-                BesuchStatus.ABGEMELDET, 1725, true, LocalDateTime.of(2026, 7, 12, 12, 1));
+                BesuchStatus.ABGEMELDET, 1725, true, LocalDateTime.of(2026, 7, 12, 12, 1), null);
         repo.aktualisieren(abgemeldet);
 
         assertThat(repo.findeById(gespeichert.id())).get().satisfies(b -> {

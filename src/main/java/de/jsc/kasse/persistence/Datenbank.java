@@ -27,7 +27,7 @@ import java.util.List;
 public final class Datenbank implements AutoCloseable {
 
     /** Aktuelle Schema-Version. */
-    public static final int SCHEMA_VERSION = 1;
+    public static final int SCHEMA_VERSION = 2;
 
     private static final String SCHEMA_RESSOURCE = "/de/jsc/kasse/persistence/schema.sql";
 
@@ -66,9 +66,35 @@ public final class Datenbank implements AutoCloseable {
 
     private void initialisiere() throws SQLException {
         fuehreSchemaAus();
-        if (aktuelleVersion() == 0) {
+        int version = aktuelleVersion();
+        if (version == 0) {
+            // Frische DB: schema.sql enthält bereits den aktuellen Stand.
             seedeStaende();
             setzeVersion(SCHEMA_VERSION);
+        } else if (version < SCHEMA_VERSION) {
+            migriere(version);
+        }
+    }
+
+    /** Hebt eine bestehende Datenbank schrittweise auf {@link #SCHEMA_VERSION}. */
+    private void migriere(int vonVersion) throws SQLException {
+        if (vonVersion < 2 && !spalteVorhanden("besuch", "lizenz_vermerk")) {
+            try (Statement st = verbindung.createStatement()) {
+                st.execute("ALTER TABLE besuch ADD COLUMN lizenz_vermerk TEXT");
+            }
+        }
+        setzeVersion(SCHEMA_VERSION);
+    }
+
+    private boolean spalteVorhanden(String tabelle, String spalte) throws SQLException {
+        try (Statement st = verbindung.createStatement();
+             ResultSet rs = st.executeQuery("PRAGMA table_info(" + tabelle + ")")) {
+            while (rs.next()) {
+                if (spalte.equalsIgnoreCase(rs.getString("name"))) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 

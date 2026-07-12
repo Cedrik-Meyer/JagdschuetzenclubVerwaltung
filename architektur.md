@@ -199,7 +199,8 @@ CREATE TABLE besuch (
   status      TEXT NOT NULL CHECK (status IN ('ANGEMELDET','ABGEMELDET')),
   gesamt_cent INTEGER NOT NULL DEFAULT 0,
   bezahlt     INTEGER NOT NULL DEFAULT 0,
-  bezahlt_am  TEXT
+  bezahlt_am  TEXT,
+  lizenz_vermerk TEXT           -- NULL = kein Override; Text = Anmeldung trotz ungültiger Lizenz, mit Begründung (ab Stage 4b, Schema v2)
 );
 
 CREATE TABLE standbuchung (
@@ -342,11 +343,13 @@ Auch rein. Der Service reagiert auf `ABGELAUFEN`/`FEHLT` mit Warnung + Aufforder
 
 > Diese Punkte blockieren Stages 2–4. Defaults sind gesetzt, damit Stage 0/1 sofort startbar sind.
 
-1. **Rabattmodell** — *Default:* getrennte `preis_mitglied` / `preis_gast` pro Stand. *Alternative:* globaler Prozentsatz. → Ist der Rabatt überall gleich oder je Stand verschieden?
+1. **Rabattmodell** — *Bestätigt:* getrennte `preis_mitglied` / `preis_gast` pro Stand (kein globaler Prozentsatz).
 2. **Lizenz → Stand** — *Bestätigt:* vorerst alle Erlaubnisse gleich behandelt, jede gültige genügt (`erforderliche_lizenz` bleibt NULL, `LizenzPruefer` mit `erforderlich = null`). Spätere Verschärfung ohne Schema-/Engine-Änderung möglich.
-3. **Abgelaufene Lizenz** — *Bestätigt:* Warnung + Pflicht zu neuem Datum ODER Override-mit-Vermerk vor Anmeldung. Zusätzlich Vorwarnung `warnung` ab Beginn des Ablaufjahres (siehe 5.2). Ablauftag zählt noch als gültig.
-4. **Zahlzeitpunkt** — *Default:* Positionen bei Anmeldung erfassen, Snapshot bei Bezahlung. → Vorkasse bei Anmeldung oder Kassieren bei Abmeldung?
+3. **Abgelaufene Lizenz** — *Bestätigt:* Warnung + Pflicht zu neuem Datum ODER Override-mit-Vermerk (`besuch.lizenz_vermerk`) vor Anmeldung. Zusätzlich Vorwarnung `warnung` ab Beginn des Ablaufjahres (siehe 5.2). Ablauftag zählt noch als gültig.
+4. **Zahlzeitpunkt / Ablauf** — *Bestätigt, zweiphasig:* Beim **Check-in** nur Standzuteilung, ohne Mengen und ohne Preis (provisorische Standbuchungen). Die Taubenzahl je Stand wird erst beim **Check-out** genannt; **dort** werden Tarife aufgelöst, die Preis-Engine läuft und die Beträge werden eingefroren (`gesamt_cent`, Standbuchungs-Snapshots). Abmelden und Kassieren sind eine Aktion. Tarif-Stichtag = `besuch.datum`. Skeet/Trap mit 0 Tauben fallen aus der Rechnung; Pauschal-Stände zählen wie zugeteilt.
 5. **Preise editierbar** — Ja, Tarif-Pflege im UI (Kassenwart), Historie via `gueltig_ab`.
+
+**Betriebsregel:** Pro Person maximal ein offener Besuch (`ANGEMELDET`); erneute Anmeldung erst nach Abmeldung möglich.
 
 ---
 
@@ -363,11 +366,12 @@ Auch rein. Der Service reagiert auf `ABGELAUFEN`/`FEHLT` mit Warnung + Aufforder
 
 | Stage | Inhalt | Abhängig von offenen Fragen? |
 |-------|--------|------------------------------|
-| **0** | Projekt-Setup: Maven, Java 21, JavaFX, SQLite, JUnit, Paketstruktur, startbares Fenster | nein |
-| **1** | Domäne + Persistenz: Entities, Enums, Repository-Interfaces + JDBC-Impls, Schema, Seed, Tests | nein |
-| **2** | Preis-Engine (rein, mit abgesegneter Testsuite) | ja (#1, #4) |
-| **3** | Lizenz-Prüfer (rein, mit Tests) | ja (#2, #3) |
-| **4** | Services: Anmelde-, Kassen-, Mitglieder-, StammdatenService | ja (#3, #4) |
+| **0** | Projekt-Setup: Maven, Java 21, JavaFX, SQLite, JUnit, Paketstruktur, startbares Fenster | ✅ fertig |
+| **1** | Domäne + Persistenz: Entities, Enums, Repository-Interfaces + JDBC-Impls, Schema, Seed, Tests | ✅ fertig |
+| **2** | Preis-Engine (rein, Testfälle T1–T11) | ✅ fertig |
+| **3** | Lizenz-Prüfer (rein, Testfälle L1–L12) | ✅ fertig |
+| **4a** | MitgliederService + StammdatenService (Datenpflege, Tarif-Auflösung) | bereit |
+| **4b** | AnmeldeService + KassenService (zweiphasiger Ablauf, Snapshot, Override; Schema v2 `lizenz_vermerk`) | bereit |
 | **5** | JavaFX-UI: Mitgliederverwaltung, Anmeldung + Lizenz-Check, Standzuteilung, Preisanzeige, Abmeldung | teilweise |
 | **6** | Tagesabschluss / Doku-Export (optional Belegdruck) | teilweise |
 | **7** | Packaging: `jpackage`-Installer | nein |

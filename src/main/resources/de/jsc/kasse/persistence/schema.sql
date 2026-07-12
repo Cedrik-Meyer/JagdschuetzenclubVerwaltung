@@ -51,7 +51,8 @@ CREATE TABLE IF NOT EXISTS besuch (
   status      TEXT NOT NULL CHECK (status IN ('ANGEMELDET','ABGEMELDET')),
   gesamt_cent INTEGER NOT NULL DEFAULT 0,
   bezahlt     INTEGER NOT NULL DEFAULT 0,
-  bezahlt_am  TEXT
+  bezahlt_am  TEXT,
+  lizenz_vermerk TEXT
 );
 
 CREATE TABLE IF NOT EXISTS standbuchung (

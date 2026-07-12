@@ -54,6 +54,17 @@ public final class StandbuchungRepositoryJdbc implements StandbuchungRepository 
     }
 
     @Override
+    public void loescheByBesuch(long besuchId) {
+        String sql = "DELETE FROM standbuchung WHERE besuch_id=?";
+        try (PreparedStatement ps = verbindung.prepareStatement(sql)) {
+            ps.setLong(1, besuchId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new PersistenzException("Standbuchungen konnten nicht gelöscht werden", e);
+        }
+    }
+
+    @Override
     public List<Standbuchung> findeByBesuch(long besuchId) {
         String sql = "SELECT " + SPALTEN + " FROM standbuchung WHERE besuch_id=? ORDER BY id";
         try (PreparedStatement ps = verbindung.prepareStatement(sql)) {

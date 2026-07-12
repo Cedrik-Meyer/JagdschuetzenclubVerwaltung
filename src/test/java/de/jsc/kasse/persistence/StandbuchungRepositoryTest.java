@@ -36,7 +36,7 @@ class StandbuchungRepositoryTest {
         Besuch besuch = new BesuchRepositoryJdbc(db.verbindung()).anlegen(
                 new Besuch(0, person.id(), LocalDate.of(2026, 7, 12),
                         LocalDateTime.of(2026, 7, 12, 9, 0), null, BesuchStatus.ANGEMELDET,
-                        0, false, null));
+                        0, false, null, null));
         Stand skeet = new StandRepositoryJdbc(db.verbindung()).findeByName("Skeet").orElseThrow();
 
         besuchId = besuch.id();

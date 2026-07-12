@@ -17,7 +17,8 @@ import java.util.Optional;
 public final class BesuchRepositoryJdbc implements BesuchRepository {
 
     private static final String SPALTEN =
-            "id, person_id, datum, check_in, check_out, status, gesamt_cent, bezahlt, bezahlt_am";
+            "id, person_id, datum, check_in, check_out, status, gesamt_cent, bezahlt, bezahlt_am, "
+            + "lizenz_vermerk";
 
     private final Connection verbindung;
 
@@ -28,7 +29,7 @@ public final class BesuchRepositoryJdbc implements BesuchRepository {
     @Override
     public Besuch anlegen(Besuch besuch) {
         String sql = "INSERT INTO besuch(person_id, datum, check_in, check_out, status, "
-                + "gesamt_cent, bezahlt, bezahlt_am) VALUES(?, ?, ?, ?, ?, ?, ?, ?)";
+                + "gesamt_cent, bezahlt, bezahlt_am, lizenz_vermerk) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement ps = verbindung.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             binde(ps, besuch);
             ps.executeUpdate();
@@ -44,10 +45,10 @@ public final class BesuchRepositoryJdbc implements BesuchRepository {
     @Override
     public void aktualisieren(Besuch besuch) {
         String sql = "UPDATE besuch SET person_id=?, datum=?, check_in=?, check_out=?, status=?, "
-                + "gesamt_cent=?, bezahlt=?, bezahlt_am=? WHERE id=?";
+                + "gesamt_cent=?, bezahlt=?, bezahlt_am=?, lizenz_vermerk=? WHERE id=?";
         try (PreparedStatement ps = verbindung.prepareStatement(sql)) {
             binde(ps, besuch);
-            ps.setLong(9, besuch.id());
+            ps.setLong(10, besuch.id());
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new PersistenzException("Besuch konnte nicht aktualisiert werden", e);
@@ -93,6 +94,7 @@ public final class BesuchRepositoryJdbc implements BesuchRepository {
         ps.setLong(6, b.gesamtCent());
         ps.setInt(7, b.bezahlt() ? 1 : 0);
         Sql.setzeTextOderNull(ps, 8, Sql.iso(b.bezahltAm()));
+        Sql.setzeTextOderNull(ps, 9, b.lizenzVermerk());
     }
 
     private static Besuch lies(ResultSet rs) throws SQLException {
@@ -105,6 +107,24 @@ public final class BesuchRepositoryJdbc implements BesuchRepository {
                 BesuchStatus.valueOf(rs.getString("status")),
                 rs.getLong("gesamt_cent"),
                 rs.getInt("bezahlt") != 0,
-                Sql.zeitpunkt(rs.getString("bezahlt_am")));
+                Sql.zeitpunkt(rs.getString("bezahlt_am")),
+                rs.getString("lizenz_vermerk"));
+    }
+
+    @Override
+    public List<Besuch> findeByStatus(BesuchStatus status) {
+        String sql = "SELECT " + SPALTEN + " FROM besuch WHERE status=? ORDER BY check_in, id";
+        try (PreparedStatement ps = verbindung.prepareStatement(sql)) {
+            ps.setString(1, status.name());
+            try (ResultSet rs = ps.executeQuery()) {
+                List<Besuch> ergebnis = new ArrayList<>();
+                while (rs.next()) {
+                    ergebnis.add(lies(rs));
+                }
+                return ergebnis;
+            }
+        } catch (SQLException e) {
+            throw new PersistenzException("Besuche konnten nicht gelesen werden", e);
+        }
     }
 }
