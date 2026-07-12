@@ -289,17 +289,52 @@ Die `service`-Schicht löst die gültigen Tarife aus der DB auf und füttert sie
 ### 5.2 Lizenz-Prüfer
 
 ```java
-record LizenzStatus(LizenzBewertung bewertung, LocalDate ablaufdatum, long tageBisAblauf) {}
+record LizenzStatus(LizenzBewertung bewertung, LocalDate ablaufdatum,
+                    long tageBisAblauf, boolean warnung) {}
 
 public final class LizenzPruefer {
     // Prüft, ob für die erforderliche Lizenzart eine gültige Erlaubnis vorliegt.
     // erforderlich == null  → jede gültige Erlaubnis genügt.
     public LizenzStatus pruefe(List<Schiesserlaubnis> lizenzen,
-                               LizenzArt erforderlich, LocalDate stichtag) { ... }
+                               LizenzArt erforderlich, LocalDate stichtag) {
+        // Relevante Erlaubnisse:
+        //   erforderlich == null -> alle; sonst nur die dieser Art.
+        // Bewertung:
+        //   keine relevante        -> FEHLT
+        //   alle relevanten abgelaufen -> ABGELAUFEN
+        //   mind. eine gueltige    -> GUELTIG
+        // Gueltig, wenn stichtag <= ablaufdatum (Ablauftag zaehlt noch).
+        // ablaufdatum: GUELTIG -> spaetestes unter den gueltigen;
+        //              ABGELAUFEN -> spaetestes unter den relevanten;
+        //              FEHLT -> null.
+        // tageBisAblauf: ChronoUnit.DAYS(stichtag -> ablaufdatum),
+        //                negativ wenn abgelaufen, bei FEHLT 0.
+        // warnung = (bewertung == GUELTIG)
+        //           && (ablaufdatum.getYear() == stichtag.getYear());
+    }
 }
 ```
 
 Auch rein. Der Service reagiert auf `ABGELAUFEN`/`FEHLT` mit Warnung + Aufforderung, ein neues Datum einzutragen.
+
+**Warnregel (bestätigt):** `warnung` wird `true`, sobald das Kalenderjahr beginnt, in dem die maßgebliche Erlaubnis abläuft — also bei Gültigkeit bis 31.03.2026 ab dem 01.01.2026. Sie ist orthogonal zur `bewertung`: eine Erlaubnis kann `GUELTIG` **und** zu warnen sein. Ab dem tatsächlichen Ablauf ist der Status `ABGELAUFEN` (keine Warnung mehr).
+
+**Abgestimmte Testfälle (Stage 3)** — Stichtag 15.06.2026, außer wo angegeben; `tageBisAblauf` exakt nur wo eindeutig, sonst Vorzeichen:
+
+| Nr | Szenario | Eingabe (erforderlich · Art/Ablauf) | bewertung | ablauf | tage | warnung |
+|----|----------|--------------------------------------|-----------|--------|------|---------|
+| L1 | Keine Erlaubnis | `null` · [] | FEHLT | null | 0 | false |
+| L2 | Gültig, Folgejahr | `null` · [JAGDSCHEIN/31.03.2027] | GUELTIG | 31.03.2027 | >0 | false |
+| L3 | Ablauf heute | `null` · [JAGDSCHEIN/15.06.2026] | GUELTIG | 15.06.2026 | 0 | true |
+| L4 | Gestern abgelaufen | `null` · [JAGDSCHEIN/14.06.2026] | ABGELAUFEN | 14.06.2026 | -1 | false |
+| L5 | Zwei gleiche Art, eine gültig | `null` · [JAGDSCHEIN/14.06.2026]+[JAGDSCHEIN/31.03.2027] | GUELTIG | 31.03.2027 | >0 | false |
+| L6 | Alle abgelaufen | `null` · [JAGDSCHEIN/01.01.2026]+[SPORTSCHUETZENSCHEIN/14.06.2026] | ABGELAUFEN | 14.06.2026 | -1 | false |
+| L7 | Bald fällig | `null` · [WBK/25.06.2026] | GUELTIG | 25.06.2026 | 10 | true |
+| L8 | Versch. Arten, spätere gültig | `null` · [JAGDSCHEIN/01.01.2026]+[WBK/31.12.2026] | GUELTIG | 31.12.2026 | >0 | true |
+| L9 | Vor Jahreswechsel — kein Warnen | *Stichtag 31.12.2025* · [JAGDSCHEIN/31.03.2026] | GUELTIG | 31.03.2026 | >0 | false |
+| L10 | Ab Jahresbeginn — Warnung | *Stichtag 01.01.2026* · [JAGDSCHEIN/31.03.2026] | GUELTIG | 31.03.2026 | >0 | true |
+| L11 | *(künftig)* geforderte Art gültig | `JAGDSCHEIN` · [JAGDSCHEIN/31.03.2027] | GUELTIG | 31.03.2027 | >0 | false |
+| L12 | *(künftig)* geforderte Art fehlt | `JAGDSCHEIN` · [WBK/31.12.2026] | FEHLT | null | 0 | false |
 
 ---
 
@@ -308,8 +343,8 @@ Auch rein. Der Service reagiert auf `ABGELAUFEN`/`FEHLT` mit Warnung + Aufforder
 > Diese Punkte blockieren Stages 2–4. Defaults sind gesetzt, damit Stage 0/1 sofort startbar sind.
 
 1. **Rabattmodell** — *Default:* getrennte `preis_mitglied` / `preis_gast` pro Stand. *Alternative:* globaler Prozentsatz. → Ist der Rabatt überall gleich oder je Stand verschieden?
-2. **Lizenz → Stand** — *Default:* Feld `erforderliche_lizenz` pro Stand (NULL = beliebige gültige). → Reale Zuordnung Erlaubnis↔Disziplin klären.
-3. **Abgelaufene Lizenz** — *Default:* Warnung + Pflicht zu neuem Datum ODER Override-mit-Vermerk vor Anmeldung an lizenzpflichtigem Stand. → Harte Sperre oder Override?
+2. **Lizenz → Stand** — *Bestätigt:* vorerst alle Erlaubnisse gleich behandelt, jede gültige genügt (`erforderliche_lizenz` bleibt NULL, `LizenzPruefer` mit `erforderlich = null`). Spätere Verschärfung ohne Schema-/Engine-Änderung möglich.
+3. **Abgelaufene Lizenz** — *Bestätigt:* Warnung + Pflicht zu neuem Datum ODER Override-mit-Vermerk vor Anmeldung. Zusätzlich Vorwarnung `warnung` ab Beginn des Ablaufjahres (siehe 5.2). Ablauftag zählt noch als gültig.
 4. **Zahlzeitpunkt** — *Default:* Positionen bei Anmeldung erfassen, Snapshot bei Bezahlung. → Vorkasse bei Anmeldung oder Kassieren bei Abmeldung?
 5. **Preise editierbar** — Ja, Tarif-Pflege im UI (Kassenwart), Historie via `gueltig_ab`.
 
