@@ -44,6 +44,11 @@ public final class MitgliederService {
                 .toList();
     }
 
+    /** Alle Personen (Mitglieder und Gäste) — z. B. für die Gesamtliste in der UI. */
+    public List<Person> findeAlle() {
+        return personRepository.findeAlle();
+    }
+
     public Optional<Person> findeMitgliedNachNummer(String mitgliedsnummer) {
         if (mitgliedsnummer == null) {
             return Optional.empty();

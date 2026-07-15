@@ -52,6 +52,15 @@ class MitgliederServiceTest {
     }
 
     @Test
+    void findeAlleLiefertMitgliederUndGaeste() {
+        Person m = mitglied();
+        Person g = service.anlegenGast("Ben", "Gast", null, null, null);
+
+        assertThat(service.findeAlle()).extracting(Person::id)
+                .containsExactlyInAnyOrder(m.id(), g.id());
+    }
+
+    @Test
     void doppelteMitgliedsnummerWirftAusnahme() {
         mitglied();
         assertThatThrownBy(() -> service.anlegenMitglied("Bea", "Berg", "M-001", null, null, null))

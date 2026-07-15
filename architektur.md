@@ -364,17 +364,20 @@ Auch rein. Der Service reagiert auf `ABGELAUFEN`/`FEHLT` mit Warnung + Aufforder
 
 ## 8. Staged Prompt-Plan
 
-| Stage | Inhalt | Abhängig von offenen Fragen? |
-|-------|--------|------------------------------|
+| Stage | Inhalt | Status |
+|-------|--------|--------|
 | **0** | Projekt-Setup: Maven, Java 21, JavaFX, SQLite, JUnit, Paketstruktur, startbares Fenster | ✅ fertig |
 | **1** | Domäne + Persistenz: Entities, Enums, Repository-Interfaces + JDBC-Impls, Schema, Seed, Tests | ✅ fertig |
 | **2** | Preis-Engine (rein, Testfälle T1–T11) | ✅ fertig |
 | **3** | Lizenz-Prüfer (rein, Testfälle L1–L12) | ✅ fertig |
-| **4a** | MitgliederService + StammdatenService (Datenpflege, Tarif-Auflösung) | bereit |
-| **4b** | AnmeldeService + KassenService (zweiphasiger Ablauf, Snapshot, Override; Schema v2 `lizenz_vermerk`) | bereit |
-| **5** | JavaFX-UI: Mitgliederverwaltung, Anmeldung + Lizenz-Check, Standzuteilung, Preisanzeige, Abmeldung | teilweise |
-| **6** | Tagesabschluss / Doku-Export (optional Belegdruck) | teilweise |
-| **7** | Packaging: `jpackage`-Installer | nein |
+| **4a** | MitgliederService + StammdatenService (Datenpflege, Tarif-Auflösung) | ✅ fertig |
+| **4b** | AnmeldeService + KassenService (zweiphasiger Ablauf, Snapshot, Override; Schema v2 `lizenz_vermerk`) | ✅ fertig |
+| **5a** | App-Shell + Navigation + Mitgliederverwaltung (Tabelle links, Details/Lizenzen rechts) | ✅ fertig |
+| **5b** | Stammdaten/Tarife (Stände, Preise, Tarifhistorie) | bereit (nächster Schritt) |
+| **5c** | Tresen: Check-in als **Dialog** (Suche, Lizenz-Check/Override, Standzuteilung) + Übersicht offener Besuche | geplant (nach 5b) |
+| **5d** | Tresen: Check-out als **Dialog** (Tauben erfassen, Summe läuft live mit, abmelden+kassieren) | geplant (nach 5c) |
+| **6** | Tagesabschluss / Doku-Export (optional Belegdruck) | geplant |
+| **7** | Packaging: `jpackage`-Installer | geplant |
 
 Jeder Stage-Prompt folgt derselben Vorlage (Abschnitt 9). Stage 0 + 1 sind unten fertig ausformuliert.
 

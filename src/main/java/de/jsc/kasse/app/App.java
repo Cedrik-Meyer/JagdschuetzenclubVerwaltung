@@ -1,42 +1,77 @@
 package de.jsc.kasse.app;
 
+import de.jsc.kasse.lizenz.LizenzPruefer;
 import de.jsc.kasse.persistence.Datenbank;
-import de.jsc.kasse.persistence.jdbc.StandRepositoryJdbc;
+import de.jsc.kasse.persistence.PersonRepository;
+import de.jsc.kasse.persistence.SchiesserlaubnisRepository;
+import de.jsc.kasse.persistence.jdbc.PersonRepositoryJdbc;
+import de.jsc.kasse.persistence.jdbc.SchiesserlaubnisRepositoryJdbc;
+import de.jsc.kasse.service.MitgliederService;
+import de.jsc.kasse.ui.MainController;
+import de.jsc.kasse.ui.MitgliederController;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.Connection;
 import javafx.application.Application;
-import javafx.geometry.Pos;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
 /**
- * Einstiegspunkt der Anwendung.
+ * Composition Root der Anwendung: öffnet die SQLite-Datenbank (Schema/Migration/Seed), baut
+ * Repositories und Services und verdrahtet sie mit den JavaFX-Controllern. Kein DI-Framework.
  *
- * <p>Öffnet beim Start die SQLite-Datenbank (Schema wird angelegt/migriert, Stände geseedet)
- * und zeigt ein Fenster mit Titel und Platzhalter-Label. Noch keine echten Views.
+ * <p>Der Datenbankpfad ist über die System-Property {@code jsc.db} konfigurierbar; Default ist
+ * {@code ~/.jagdschuetzenclub/kasse.db}.
  */
 public class App extends Application {
 
     static final String TITEL = "Jagdschützenclub-Verwaltung";
-    private static final Path STANDARD_DB = Path.of("kasse.db");
 
     private Datenbank datenbank;
 
     @Override
-    public void start(Stage stage) {
-        datenbank = Datenbank.ausDatei(STANDARD_DB);
-        int anzahlStaende = new StandRepositoryJdbc(datenbank.verbindung()).findeAlle().size();
+    public void start(Stage stage) throws IOException {
+        datenbank = oeffneDatenbank();
+        Connection verbindung = datenbank.verbindung();
 
-        Label platzhalter = new Label(
-                "Jagdschützenclub-Verwaltung — Datenbank bereit (" + anzahlStaende + " Stände)");
+        // Repositories + Services (Composition Root)
+        PersonRepository personRepository = new PersonRepositoryJdbc(verbindung);
+        SchiesserlaubnisRepository schiesserlaubnisRepository =
+                new SchiesserlaubnisRepositoryJdbc(verbindung);
+        MitgliederService mitgliederService =
+                new MitgliederService(personRepository, schiesserlaubnisRepository);
+        LizenzPruefer lizenzPruefer = new LizenzPruefer();
 
-        StackPane wurzel = new StackPane(platzhalter);
-        StackPane.setAlignment(platzhalter, Pos.CENTER);
+        // Mitglieder-View mit injiziertem Controller
+        FXMLLoader mitgliederLoader =
+                new FXMLLoader(getClass().getResource("/de/jsc/kasse/ui/Mitglieder.fxml"));
+        mitgliederLoader.setController(new MitgliederController(mitgliederService, lizenzPruefer));
+        Parent mitgliederInhalt = mitgliederLoader.load();
+
+        // Hauptfenster
+        FXMLLoader mainLoader = new FXMLLoader(getClass().getResource("/de/jsc/kasse/ui/Main.fxml"));
+        Parent wurzel = mainLoader.load();
+        MainController mainController = mainLoader.getController();
+        mainController.setMitgliederInhalt(mitgliederInhalt);
 
         stage.setTitle(TITEL);
-        stage.setScene(new Scene(wurzel, 640, 400));
+        stage.setScene(new Scene(wurzel, 1000, 640));
         stage.show();
+    }
+
+    private Datenbank oeffneDatenbank() throws IOException {
+        String konfiguriert = System.getProperty("jsc.db");
+        Path pfad = (konfiguriert != null && !konfiguriert.isBlank())
+                ? Path.of(konfiguriert)
+                : Path.of(System.getProperty("user.home"), ".jagdschuetzenclub", "kasse.db");
+        Path verzeichnis = pfad.toAbsolutePath().getParent();
+        if (verzeichnis != null) {
+            Files.createDirectories(verzeichnis);
+        }
+        return Datenbank.ausDatei(pfad);
     }
 
     @Override

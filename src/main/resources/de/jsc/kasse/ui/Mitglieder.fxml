@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml">
+    <top>
+        <HBox spacing="8.0">
+            <padding>
+                <Insets top="8.0" right="8.0" bottom="8.0" left="8.0" />
+            </padding>
+            <children>
+                <TextField fx:id="suchfeld" promptText="Suche (Name oder Mitgliedsnummer)" HBox.hgrow="ALWAYS" />
+                <ComboBox fx:id="typFilter" />
+                <CheckBox fx:id="nurAktive" text="nur Aktive" />
+                <Button fx:id="neuMitgliedBtn" text="Mitglied anlegen" />
+                <Button fx:id="neuGastBtn" text="Gast anlegen" />
+                <Button fx:id="bearbeitenBtn" text="Bearbeiten" />
+                <Button fx:id="deaktivierenBtn" text="Deaktivieren" />
+            </children>
+        </HBox>
+    </top>
+    <center>
+        <SplitPane dividerPositions="0.62">
+            <items>
+                <TableView fx:id="personenTabelle" />
+                <VBox spacing="8.0">
+                    <padding>
+                        <Insets top="8.0" right="8.0" bottom="8.0" left="8.0" />
+                    </padding>
+                    <children>
+                        <Label text="Schießerlaubnisse der ausgewählten Person" />
+                        <TableView fx:id="lizenzTabelle" VBox.vgrow="ALWAYS" />
+                        <HBox spacing="8.0">
+                            <children>
+                                <Button fx:id="lizenzHinzufuegenBtn" text="Lizenz hinzufügen" />
+                                <Button fx:id="ablaufAktualisierenBtn" text="Neues Ablaufdatum" />
+                            </children>
+                        </HBox>
+                    </children>
+                </VBox>
+            </items>
+        </SplitPane>
+    </center>
+</BorderPane>

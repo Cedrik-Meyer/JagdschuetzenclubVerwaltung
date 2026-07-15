@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.layout.StackPane?>
+
+<TabPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+         fx:controller="de.jsc.kasse.ui.MainController" tabClosingPolicy="UNAVAILABLE">
+    <tabs>
+        <Tab text="Tresen">
+            <content>
+                <StackPane>
+                    <Label text="Tresen — Check-in / Check-out folgt in Stage 5c/5d." />
+                </StackPane>
+            </content>
+        </Tab>
+        <Tab fx:id="mitgliederTab" text="Mitglieder" />
+        <Tab text="Stammdaten">
+            <content>
+                <StackPane>
+                    <Label text="Stammdaten — Tarif-/Standpflege folgt in Stage 5b." />
+                </StackPane>
+            </content>
+        </Tab>
+    </tabs>
+</TabPane>
