@@ -373,8 +373,8 @@ Auch rein. Der Service reagiert auf `ABGELAUFEN`/`FEHLT` mit Warnung + Aufforder
 | **4a** | MitgliederService + StammdatenService (Datenpflege, Tarif-Auflösung) | ✅ fertig |
 | **4b** | AnmeldeService + KassenService (zweiphasiger Ablauf, Snapshot, Override; Schema v2 `lizenz_vermerk`) | ✅ fertig |
 | **5a** | App-Shell + Navigation + Mitgliederverwaltung (Tabelle links, Details/Lizenzen rechts) | ✅ fertig |
-| **5b** | Stammdaten/Tarife (Stände, Preise, Tarifhistorie) | bereit (nächster Schritt) |
-| **5c** | Tresen: Check-in als **Dialog** (Suche, Lizenz-Check/Override, Standzuteilung) + Übersicht offener Besuche | geplant (nach 5b) |
+| **5b** | Stammdaten/Tarife (Stände, Preise, Tarifhistorie) | ✅ fertig |
+| **5c** | Tresen: Check-in als **Dialog** (Suche, Lizenz-Check/Override, Standzuteilung) + Übersicht offener Besuche | bereit (nächster Schritt) |
 | **5d** | Tresen: Check-out als **Dialog** (Tauben erfassen, Summe läuft live mit, abmelden+kassieren) | geplant (nach 5c) |
 | **6** | Tagesabschluss / Doku-Export (optional Belegdruck) | geplant |
 | **7** | Packaging: `jpackage`-Installer | geplant |

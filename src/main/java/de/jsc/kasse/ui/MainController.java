@@ -13,8 +13,16 @@ public class MainController {
     @FXML
     private Tab mitgliederTab;
 
+    @FXML
+    private Tab stammdatenTab;
+
     /** Setzt den Inhalt des Mitglieder-Reiters (von der Composition Root injiziert). */
     public void setMitgliederInhalt(Node inhalt) {
         mitgliederTab.setContent(inhalt);
+    }
+
+    /** Setzt den Inhalt des Stammdaten-Reiters (von der Composition Root injiziert). */
+    public void setStammdatenInhalt(Node inhalt) {
+        stammdatenTab.setContent(inhalt);
     }
 }

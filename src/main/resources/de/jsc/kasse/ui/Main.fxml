@@ -16,12 +16,6 @@
             </content>
         </Tab>
         <Tab fx:id="mitgliederTab" text="Mitglieder" />
-        <Tab text="Stammdaten">
-            <content>
-                <StackPane>
-                    <Label text="Stammdaten — Tarif-/Standpflege folgt in Stage 5b." />
-                </StackPane>
-            </content>
-        </Tab>
+        <Tab fx:id="stammdatenTab" text="Stammdaten" />
     </tabs>
 </TabPane>

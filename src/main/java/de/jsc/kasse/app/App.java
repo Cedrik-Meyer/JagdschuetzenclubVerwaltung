@@ -4,11 +4,17 @@ import de.jsc.kasse.lizenz.LizenzPruefer;
 import de.jsc.kasse.persistence.Datenbank;
 import de.jsc.kasse.persistence.PersonRepository;
 import de.jsc.kasse.persistence.SchiesserlaubnisRepository;
+import de.jsc.kasse.persistence.StandRepository;
+import de.jsc.kasse.persistence.TarifRepository;
 import de.jsc.kasse.persistence.jdbc.PersonRepositoryJdbc;
 import de.jsc.kasse.persistence.jdbc.SchiesserlaubnisRepositoryJdbc;
+import de.jsc.kasse.persistence.jdbc.StandRepositoryJdbc;
+import de.jsc.kasse.persistence.jdbc.TarifRepositoryJdbc;
 import de.jsc.kasse.service.MitgliederService;
+import de.jsc.kasse.service.StammdatenService;
 import de.jsc.kasse.ui.MainController;
 import de.jsc.kasse.ui.MitgliederController;
+import de.jsc.kasse.ui.StammdatenController;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,8 +47,12 @@ public class App extends Application {
         PersonRepository personRepository = new PersonRepositoryJdbc(verbindung);
         SchiesserlaubnisRepository schiesserlaubnisRepository =
                 new SchiesserlaubnisRepositoryJdbc(verbindung);
+        StandRepository standRepository = new StandRepositoryJdbc(verbindung);
+        TarifRepository tarifRepository = new TarifRepositoryJdbc(verbindung);
         MitgliederService mitgliederService =
                 new MitgliederService(personRepository, schiesserlaubnisRepository);
+        StammdatenService stammdatenService =
+                new StammdatenService(standRepository, tarifRepository);
         LizenzPruefer lizenzPruefer = new LizenzPruefer();
 
         // Mitglieder-View mit injiziertem Controller
@@ -51,11 +61,18 @@ public class App extends Application {
         mitgliederLoader.setController(new MitgliederController(mitgliederService, lizenzPruefer));
         Parent mitgliederInhalt = mitgliederLoader.load();
 
+        // Stammdaten-View mit injiziertem Controller
+        FXMLLoader stammdatenLoader =
+                new FXMLLoader(getClass().getResource("/de/jsc/kasse/ui/Stammdaten.fxml"));
+        stammdatenLoader.setController(new StammdatenController(stammdatenService));
+        Parent stammdatenInhalt = stammdatenLoader.load();
+
         // Hauptfenster
         FXMLLoader mainLoader = new FXMLLoader(getClass().getResource("/de/jsc/kasse/ui/Main.fxml"));
         Parent wurzel = mainLoader.load();
         MainController mainController = mainLoader.getController();
         mainController.setMitgliederInhalt(mitgliederInhalt);
+        mainController.setStammdatenInhalt(stammdatenInhalt);
 
         stage.setTitle(TITEL);
         stage.setScene(new Scene(wurzel, 1000, 640));
